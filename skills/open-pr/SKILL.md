@@ -34,14 +34,36 @@ evidence gathered may not match what is pushed, then continue.
 gh pr view --json number,baseRefName,url,body 2>/dev/null
 ```
 
-- PR exists → note its number, use its `baseRefName` as base, and plan to **edit**.
-- No PR → base is the user's argument, else the default branch:
+- PR exists → note its number, take its `baseRefName` as the base *branch name*, and plan to
+  **edit**.
+- No PR → the base branch name is the user's argument, else the default branch:
   `git symbolic-ref --short refs/remotes/origin/HEAD` (strip `origin/`), falling back to `main`.
 - `gh` missing or unauthenticated → record that, keep going, and deliver via clipboard in
   step 8.
 - **`no git remotes found`** → there is nowhere to open a PR. Do not abort: compose the body
   anyway, deliver it to the clipboard in step 8, and tell the user to add a remote and push
   first. Never report a PR as created.
+
+**Then turn that branch NAME into the ref you will actually diff against — never use the bare
+local branch.** A local `main` is frequently weeks behind `origin/main`, and diffing against it
+silently pulls in every commit merged since, plus every project those files belong to:
+
+```bash
+git fetch --quiet origin                                  # skip when there is no remote
+BASE_NAME=<baseRefName from above>                        # e.g. main
+BASE=$(git rev-parse --verify --quiet "origin/$BASE_NAME" >/dev/null \
+  && echo "origin/$BASE_NAME" || echo "$BASE_NAME")       # remote ref wins; local is the fallback
+```
+
+Use `$BASE` for every later step — the diff in step 4, `nx affected --base=` in step 6, and
+the merge base in step 6's classification. **Report it in step 9** so the reviewer knows what
+the numbers were measured against.
+
+Why this matters: on a stale local `main`, `git diff main...HEAD` returned 93 files belonging
+to another team's app, so `nx affected` ran that app's targets and failed on dependencies this
+branch never touched — failures that are neither the branch's fault nor pre-existing in any
+meaningful sense. If the two refs differ, say so in the report; a stale local `main` is worth
+the user knowing about (`git fetch && git branch -f <name> origin/<name>`).
 
 ### 3. Push the branch if needed
 
@@ -57,12 +79,18 @@ body; the user still gets usable text. Only the delivery step changes, never the
 
 ### 4. Gather change facts
 
+`$BASE` is the ref resolved in step 2 (`origin/<name>` whenever that exists), not the bare
+branch name.
+
 ```bash
-BASE=<resolved base>
 git log "$BASE"..HEAD --format='%n===%n%H%n%s%n%n%b'   # full bodies — the source material
 git diff "$BASE"...HEAD --stat
 git diff "$BASE"...HEAD --name-only | sort
 ```
+
+Sanity-check the file list before going further: every path should plausibly belong to this
+branch's work. A diff spanning apps the branch never touched means `$BASE` is wrong — go back
+to step 2 rather than reporting on someone else's changes.
 
 ### 5. Locate the PR template
 
@@ -163,7 +191,9 @@ Then, in order of availability:
 
 ```bash
 # no existing PR
-gh pr create --base "$BASE" --title "<title>" --body-file "$BODY"
+# NOTE: --base takes the branch NAME ($BASE_NAME from step 2), never the ref ($BASE).
+# `gh pr create --base origin/main` fails: there is no branch called "origin/main".
+gh pr create --base "$BASE_NAME" --title "<title>" --body-file "$BODY"
 
 # existing PR whose body is empty or carries the generated-by marker
 gh pr edit <number> --body-file "$BODY"
@@ -183,8 +213,10 @@ then print the file path and
 
 ### 9. Report
 
-State: the PR URL (or the paste-me URL), the title used, every checkbox left unticked and
-why, and any failure classified as pre-existing.
+State: the PR URL (or the paste-me URL), the title used, **which ref the evidence was measured
+against** (`$BASE`), every checkbox left unticked and why, and any failure classified as
+pre-existing. If the local branch of the same name was behind the remote, mention it — the user
+is probably running stale `nx affected` commands too.
 
 ## Failure behaviour
 
@@ -198,6 +230,7 @@ why, and any failure classified as pre-existing.
 | No test/lint scripts | Body emitted; Verification says "no runner detected" |
 | Verification errors or times out | Body emitted; Verification marked incomplete, cause named |
 | Dirty working tree | Warn that evidence may not match the pushed commit |
+| Local base branch behind the remote | Diff against `origin/<name>`; say so in the report |
 | On default branch, or 0 commits ahead | Stop and explain; there is nothing to open |
 
 ## Never
@@ -206,4 +239,6 @@ why, and any failure classified as pre-existing.
 - State a test count that was not observed.
 - Overwrite a human-written PR description without asking.
 - Invent acceptance-criteria verdicts, or claim a tracker was consulted when it was not.
+- Measure the diff or `nx affected` against a bare local branch when a remote-tracking ref for
+  it exists. A stale local base attributes other people's failures to this branch.
 - Force-push, amend commits, or write inside the target repo's tree.

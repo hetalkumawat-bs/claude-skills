@@ -1,11 +1,16 @@
 {
   "name": "hetal-skills",
   "description": "Skills for shipping work: open a PR with an evidence-backed description, and related workflow helpers",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "Hetal Kumawat"
   },
   "repository": "https://github.com/hetalkumawat-bs/claude-skills",
   "license": "MIT",
-  "keywords": ["pull-request", "github", "workflow", "gh-cli"]
+  "keywords": [
+    "pull-request",
+    "github",
+    "workflow",
+    "gh-cli"
+  ]
 }
