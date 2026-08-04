@@ -1,0 +1,14 @@
+{
+  "name": "hetal-skills",
+  "description": "Personal Claude Code skills: PR authoring, Jira handoff, review flow",
+  "owner": {
+    "name": "Hetal Kumawat"
+  },
+  "plugins": [
+    {
+      "name": "hetal-skills",
+      "description": "Skills for shipping work: open a PR with an evidence-backed description, and related workflow helpers",
+      "source": "."
+    }
+  ]
+}
