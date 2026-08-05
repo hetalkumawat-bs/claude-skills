@@ -22,9 +22,11 @@ Create the `handoff/` directory if it does not exist. Use the repository root
 write to a system temp directory — the doc must survive the session ending and
 be readable by another account.
 
-If the repo has a `.gitignore` and `handoff/` is not listed, mention to the user
-that they can either commit the folder (so it travels between machines) or
-ignore it (keep it local). Do not change `.gitignore` without asking.
+`handoff/` is added to the repo's `.gitignore` automatically by a `PostToolUse`
+hook the first time you write a file there, so the documents stay local. Tell the
+user it was ignored, and that if they want the document to travel between
+*machines* (not just between accounts on one machine) they should commit the
+folder instead.
 
 ## What to include
 

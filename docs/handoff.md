@@ -23,6 +23,7 @@ So the plugin splits the job:
 | `scripts/usage-sensor.py` | status line; also records usage to `~/.claude/handoff/usage-state.json` |
 | `scripts/handoff-guard.py` | `Stop` hook; reads that file, and past the threshold asks Claude to run `handoff` |
 | `scripts/handoff-resume.py` | `SessionStart` hook; points a new session at an existing handoff |
+| `scripts/handoff-gitignore.py` | `PostToolUse` hook; adds `handoff/` to `.gitignore` the first time a handoff file is written |
 
 ## Setup
 
@@ -68,8 +69,17 @@ Open Claude Code in the same repo. The `SessionStart` hook spots
 `handoff/HANDOFF-latest.md` and tells the session to read it first, so you can
 just carry on. Nothing to type.
 
-Note `handoff/` is untracked by default in most repos. Commit it if you want the
-document to travel between machines, not just between accounts on one machine.
+## .gitignore
+
+`handoff/` is added to the repo's `.gitignore` automatically — but only when a
+handoff file is actually written there, so repos where you never use the skill
+are left alone. The check is idempotent and recognises existing patterns
+(`handoff/`, `handoff/*`, `/handoff`), so it never appends a duplicate. Non-git
+directories are skipped entirely.
+
+That keeps the document local to the machine. If you want it to travel between
+*machines* rather than just between accounts, commit the folder instead — remove
+the entry and `git add handoff/`.
 
 ## Requirements
 
