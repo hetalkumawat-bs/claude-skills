@@ -114,20 +114,59 @@ Detect:
   fall back to `npx`.
 - Neither → record "no runner detected" and go to step 7.
 
-Run them. Capture real pass/fail counts — never estimate.
+**Run each target EXACTLY ONCE and tee its full output to a file. Never re-run a suite to
+answer a follow-up question about it — read the file again.**
 
-**For each FAILING target only**, establish whether it is inherited:
+```bash
+OUT=$(mktemp -d)/branch.log
+npx nx affected -t lint typecheck test --base="$BASE" --head=HEAD --skip-nx-cache 2>&1 \
+  | sed 's/\x1b\[[0-9;]*m//g' | tee "$OUT" | tail -40
+```
+
+Everything you need afterwards comes out of `$OUT` with `grep`: the pass/fail counts, which
+targets failed, which test FILES failed, the individual assertion messages. Strip ANSI colour
+codes on the way in (the `sed` above) or every later `grep` and `awk` fights escape sequences —
+that alone caused four wasted re-runs on a suite that took ~3 minutes each time.
+
+```bash
+grep -E "Test Files|Tests " "$OUT"                                   # counts
+grep -E "^ *❯ " "$OUT" | awk '{print $2}' | grep -E "\.test\.[jt]sx?$" | sort -u  # failing files
+grep -E "Failed tasks" -A 5 "$OUT"                                   # which nx targets failed
+```
+
+Do **not** anchor that filename pattern with `$` — vitest prints
+`❯ src/foo.test.tsx (8 tests | 1 failed) 927ms`, so the line does not end at the path. Filter the
+awk'd field instead, as above. (Getting this wrong returns zero files and looks like "nothing
+failed", which is how the wasted re-runs started.)
+
+Capture real pass/fail counts — never estimate.
+
+**For each FAILING target only**, establish whether it is inherited. Same rule: one run, tee'd
+to its own file, then compare the two files.
 
 ```bash
 MB=$(git merge-base "$BASE" HEAD)
 WT=$(mktemp -d)/mb
 git worktree add -q --detach "$WT" "$MB"
 ln -s "$(git rev-parse --show-toplevel)/node_modules" "$WT/node_modules"   # see note
+BASE_OUT=$(mktemp -d)/base.log
 # re-run ONLY the failing target inside $WT, adding --skip-nx-cache so a cached
-# green result from the branch cannot be served here, e.g.:
-#   (cd "$WT" && npx nx run <project>:<target> --skip-nx-cache)
+# green result from the branch cannot be served here:
+(cd "$WT" && npx nx run <project>:<target> --skip-nx-cache 2>&1 \
+  | sed 's/\x1b\[[0-9;]*m//g' | tee "$BASE_OUT" | tail -20)
 rm -f "$WT/node_modules" && git worktree remove --force "$WT"
 ```
+
+Then diff the two failing-file SETS from the saved logs — never by re-running either side:
+
+```bash
+extract() { grep -E "^ *❯ " "$1" | awk '{print $2}' | grep -E "\.test\.[jt]sx?$" | sort -u; }
+comm -13 <(extract "$BASE_OUT") <(extract "$OUT")   # fails here but NOT at base = YOUR regressions
+comm -23 <(extract "$BASE_OUT") <(extract "$OUT")   # fixed by this branch
+```
+
+An empty first list is the proof that goes in the body. Compare SETS, not totals: a suite whose
+failure count is identical can still have swapped one flaky file for another.
 
 **A fresh worktree has no `node_modules`, so the runner will not start.** Symlink the main
 checkout's `node_modules` in (as above) and remove the symlink before
@@ -136,6 +175,11 @@ non-JS ecosystems, do the equivalent for that toolchain's dependency directory.
 
 Fails at merge base too → **pre-existing**. Passes there → **introduced by this branch**.
 Skip this entirely when everything is green. Never run it inside the user's working tree.
+
+**Budget: two suite executions per invocation** — one on the branch, one at the merge base (and
+the second only when something actually failed). A third means you threw away output you already
+had. On a repo whose suite takes minutes, this is the single largest cost in the whole skill;
+seven runs where two would do is most of the wall-clock time the user waits for.
 
 ### 7. Compose the body
 
@@ -241,4 +285,6 @@ is probably running stale `nx affected` commands too.
 - Invent acceptance-criteria verdicts, or claim a tracker was consulted when it was not.
 - Measure the diff or `nx affected` against a bare local branch when a remote-tracking ref for
   it exists. A stale local base attributes other people's failures to this branch.
+- Re-run a test suite to answer a question the previous run's output already answered. Tee it
+  once, grep the file.
 - Force-push, amend commits, or write inside the target repo's tree.
