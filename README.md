@@ -16,6 +16,21 @@ install. This repo holds the ones I use across projects and is installable by an
 | Skill | What it does |
 | --- | --- |
 | `open-pr` | Opens a GitHub PR with a short, evidence-backed description built from the repo's own PR template, the branch's commit bodies, and real test/lint runs. Labels failing checks pre-existing vs introduced. |
+| `handoff` | Writes a handoff doc to `handoff/` in the project root so a fresh session — or a different account — can continue the work. Fires automatically at 90% session usage, and a `SessionStart` hook points the next session at it. See [`docs/handoff.md`](docs/handoff.md). |
+
+### handoff needs one extra step
+
+The hooks install with the plugin, but the usage sensor has to be your status line —
+that is the only place Claude Code exposes the `/usage` percentages:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/usage-sensor.py"
+  }
+}
+```
 
 ## Worked example
 
