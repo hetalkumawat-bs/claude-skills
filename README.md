@@ -16,6 +16,7 @@ install. This repo holds the ones I use across projects and is installable by an
 | Skill | What it does |
 | --- | --- |
 | `open-pr` | Opens a GitHub PR with a short, evidence-backed description built from the repo's own PR template, the branch's commit bodies, and real test/lint runs. Labels failing checks pre-existing vs introduced. |
+| `start-ticket` | Paste a Jira ticket: pulls the base branch, cuts the ticket branch, then reports a cited, per-AC gap between the acceptance criteria and the code before changing anything. Confirms which parts of the repo are in scope and refuses to edit the rest. `--gap-only` for read-only analysis. |
 | `handoff` | Writes a handoff doc to `handoff/` in the project root so a fresh session — or a different account — can continue the work. Fires automatically at 90% session usage, and a `SessionStart` hook points the next session at it. See [`docs/handoff.md`](docs/handoff.md). |
 
 ### handoff needs one extra step
@@ -31,6 +32,20 @@ that is the only place Claude Code exposes the `/usage` percentages:
   }
 }
 ```
+
+### start-ticket asks about scope once
+
+The first run in a repo asks which surfaces are in scope, defaulting to what the ticket's own
+title tags declare, and offers to record the answer in the repo's `CLAUDE.md` / `AGENTS.md`:
+
+```markdown
+## Scope
+Default in-scope: apps/backend-api, apps/frontend-web, libs/*
+Never modify apps/mobile unless the ticket or the request names it explicitly.
+```
+
+Later runs read that and skip the question. Recording it there rather than in the skill's own
+config means the constraint also holds in plain sessions, and travels to the team through git.
 
 ## Worked example
 
