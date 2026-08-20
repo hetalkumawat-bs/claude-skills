@@ -1,0 +1,70 @@
+/* High-level layered architecture — Figure 1.
+   Swap #263C8A (+ tints #EAF0FB / #D7E3F7) for the client's primary brand colour.
+   Render: dot -Tpng -Gdpi=150 architecture-highlevel.dot -o architecture-highlevel.png  */
+digraph HighLevel {
+  rankdir=TB;
+  bgcolor="white";
+  compound=true;
+  splines=polyline;
+  nodesep=0.55;
+  ranksep=0.85;
+  fontname="Helvetica";
+
+  node [shape=box, style="rounded,filled", fontname="Helvetica",
+        fontsize=12, color="#263C8A", fillcolor="#EAF0FB",
+        fontcolor="#1b2a5e", penwidth=1.4, margin="0.22,0.16",
+        width=2.6, height=1.0, fixedsize=true];
+  edge [fontname="Helvetica", fontsize=11, color="#5b6b8c",
+        fontcolor="#3a4a6b", arrowsize=0.85, penwidth=1.2];
+  graph [fontname="Helvetica-Bold", fontsize=15, fontcolor="#263C8A"];
+
+  /* ---- Actors ---- */
+  users [label="Users\n(browser)", fillcolor="#263C8A",
+         fontcolor="white", color="#1b2a5e", height=0.85, width=2.4];
+
+  /* ---- Presentation ---- */
+  subgraph cluster_pres {
+    label="  Presentation Layer"; labeljust="l";
+    style="rounded,filled"; color="#AFC0E4"; fillcolor="#F3F7FE";
+    margin=18; rank="same";
+    web  [label="Web App\n{{framework}}\n(:{{port}})"];
+    api  [label="API routes\n(forms · proxy)"];
+  }
+
+  /* ---- Application ---- */
+  subgraph cluster_app {
+    label="  Application Layer"; labeljust="l";
+    style="rounded,filled"; color="#AFC0E4"; fillcolor="#F3F7FE";
+    margin=18; rank="same";
+    svc1 [label="{{Service A}}\n{{tech}}\n(:{{port}})"];
+    svc2 [label="{{Service B}}\n{{tech}}\n(:{{port}})"];
+  }
+
+  /* ---- Data ---- */
+  subgraph cluster_data {
+    label="  Data Layer"; labeljust="l";
+    style="rounded,filled"; color="#AFC0E4"; fillcolor="#F3F7FE";
+    margin=18;
+    db [label="{{PostgreSQL}}\nschemas: {{…}}\n(:5432)",
+        fillcolor="#D7E3F7", color="#1b2a5e"];
+  }
+
+  /* ---- External ---- */
+  subgraph cluster_ext {
+    label="  External Integrations"; labeljust="l";
+    style="rounded,filled"; color="#D8B24A"; fillcolor="#FBF6E9";
+    margin=18; rank="same";
+    ext1 [label="{{Integration}}\n({{purpose}})", fillcolor="#FBF1D6", color="#B07F1B"];
+    ext2 [label="{{Integration}}\n({{purpose}})", fillcolor="#FBF1D6", color="#B07F1B"];
+  }
+
+  /* ---- Flows ---- */
+  users -> web  [label="HTTPS"];
+  web   -> api  [label="proxy"];
+  web   -> svc1 [label="server fetch"];
+  api   -> svc2 [label="REST"];
+  svc1  -> db;
+  svc2  -> db;
+  svc2  -> ext1 [label="{{verb}}"];
+  web   -> ext2 [label="{{verb}}"];
+}
