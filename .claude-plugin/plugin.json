@@ -1,22 +1,30 @@
 {
   "name": "hetal-skills",
-  "description": "Skills for shipping work: start a Jira ticket with a cited gap analysis, open a PR with an evidence-backed description, and hand off a session",
-  "version": "0.3.0",
+  "description": "Skills for shipping work: start a Jira ticket with a cited gap analysis, open a PR with an evidence-backed description, hand off a session, and write a branded technical documentation deliverable from the codebase",
+  "version": "0.4.0",
   "author": {
     "name": "Hetal Kumawat"
   },
   "repository": "https://github.com/hetalkumawat-bs/claude-skills",
   "license": "MIT",
   "keywords": [
-    "pull-request",
-    "github",
-    "workflow",
-    "gh-cli",
-    "handoff",
+    "acceptance-criteria",
+    "architecture",
+    "branding",
     "context",
+    "design-system",
+    "documentation",
+    "docx",
+    "gap-analysis",
+    "gh-cli",
+    "github",
+    "handoff",
     "hooks",
     "jira",
-    "acceptance-criteria",
-    "gap-analysis"
+    "pandoc",
+    "pdf",
+    "pull-request",
+    "technical-writing",
+    "workflow"
   ]
 }
