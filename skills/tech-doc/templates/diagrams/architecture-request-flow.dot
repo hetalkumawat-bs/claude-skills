@@ -1,0 +1,47 @@
+/* Request / response flow — Figure 2. Numbered steps, solid out, dashed back.
+   Render: dot -Tpng -Gdpi=150 architecture-request-flow.dot -o architecture-request-flow.png */
+digraph RequestFlow {
+  rankdir=TB;
+  bgcolor="white";
+  compound=true;
+  splines=spline;
+  nodesep=0.7;
+  ranksep=0.75;
+  fontname="Helvetica";
+
+  node [shape=box, style="rounded,filled", fontname="Helvetica",
+        fontsize=13, color="#263C8A", fillcolor="#EAF0FB",
+        fontcolor="#1b2a5e", penwidth=1.6, margin="0.24,0.16",
+        width=2.5, height=1.0, fixedsize=true];
+  edge [fontname="Helvetica", fontsize=11, color="#2f6fb0",
+        fontcolor="#23527c", penwidth=1.4, arrowsize=0.9];
+
+  user [label="User\n(browser)", fillcolor="#263C8A", fontcolor="white", color="#1b2a5e"];
+  dns  [label="DNS\n{{domain}}"];
+  lb   [label="HTTPS\nLoad Balancer"];
+  web  [label="Web App\n{{framework}}"];
+
+  svc1 [label="{{Service A}}\n({{role}})"];
+  svc2 [label="{{Service B}}\n({{role}})"];
+
+  db   [label="{{Database}}\n{{schemas}}", fillcolor="#D7E3F7", color="#1b2a5e"];
+  blob [label="{{Object Storage}}\n{{bucket}}", fillcolor="#D7E3F7", color="#1b2a5e"];
+  ext  [label="{{External API}}", fillcolor="#FBF1D6", color="#B07F1B"];
+
+  { rank=same; svc1; svc2; }
+  { rank=same; db; blob; ext; }
+
+  /* ---- Request path ---- */
+  user -> dns  [label=" 1 · HTTPS"];
+  dns  -> lb   [label=" 2 · resolve"];
+  lb   -> web  [label=" 3 · route"];
+  web  -> svc1 [label=" 4a · {{call}}"];
+  web  -> svc2 [label=" 4b · {{call}}"];
+  svc1 -> db   [label=" 5a · query"];
+  svc2 -> blob [label=" 5b · read/write"];
+  svc2 -> ext  [label=" 5c · {{call}}"];
+
+  /* ---- Response path ---- */
+  svc1 -> web  [label=" 6 · data", style=dashed, constraint=false];
+  web  -> user [label=" 7 · rendered response", style=dashed, constraint=false];
+}

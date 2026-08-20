@@ -1,0 +1,49 @@
+/* CI/CD and branch strategy — Figure 4. One lane per environment.
+   Render: dot -Tpng -Gdpi=150 architecture-cicd.dot -o architecture-cicd.png */
+digraph CICD {
+  rankdir=LR;
+  bgcolor="white";
+  compound=true;
+  splines=polyline;
+  nodesep=0.45;
+  ranksep=0.8;
+  fontname="Helvetica";
+
+  node [shape=box, style="rounded,filled", fontname="Helvetica",
+        fontsize=12, color="#263C8A", fillcolor="#EAF0FB",
+        fontcolor="#1b2a5e", penwidth=1.4, margin="0.20,0.14",
+        width=2.2, height=0.9, fixedsize=true];
+  edge [fontname="Helvetica", fontsize=11, color="#5b6b8c",
+        fontcolor="#3a4a6b", arrowsize=0.85, penwidth=1.2];
+  graph [fontname="Helvetica-Bold", fontsize=15, fontcolor="#263C8A"];
+
+  dev [label="feature branch\n(developer)", fillcolor="#263C8A",
+       fontcolor="white", color="#1b2a5e"];
+
+  subgraph cluster_dev {
+    label="  {{DEV / UAT}}"; labeljust="l";
+    style="rounded,filled"; color="#AFC0E4"; fillcolor="#F3F7FE"; margin=18;
+    b_dev  [label="branch\n`{{development}}`"];
+    ci_dev [label="CI\n{{GitHub Actions}}\nbuild · test · push"];
+    e_dev  [label="{{DEV runtime}}\n{{host}}", fillcolor="#D7E3F7", color="#1b2a5e"];
+  }
+
+  subgraph cluster_prod {
+    label="  {{PROD}}"; labeljust="l";
+    style="rounded,filled"; color="#AFC0E4"; fillcolor="#F3F7FE"; margin=18;
+    b_prod  [label="branch\n`{{main}}`"];
+    ci_prod [label="CI\n{{GitHub Actions}}\nbuild · test · push"];
+    e_prod  [label="{{PROD runtime}}\n{{host}}", fillcolor="#D7E3F7", color="#1b2a5e"];
+  }
+
+  reg [label="{{Artifact Registry}}\ncontainer images", fillcolor="#FBF1D6", color="#B07F1B"];
+
+  dev     -> b_dev   [label="PR + review"];
+  b_dev   -> ci_dev  [label="on merge"];
+  ci_dev  -> reg     [label="push image"];
+  reg     -> e_dev   [label="deploy"];
+  b_dev   -> b_prod  [label="release PR"];
+  b_prod  -> ci_prod [label="on merge"];
+  ci_prod -> reg     [label="push image"];
+  reg     -> e_prod  [label="deploy"];
+}

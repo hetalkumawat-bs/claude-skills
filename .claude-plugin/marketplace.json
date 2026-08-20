@@ -1,13 +1,13 @@
 {
   "name": "hetal-skills",
-  "description": "Personal Claude Code skills: Jira ticket start-up, PR authoring, session handoff",
+  "description": "Personal Claude Code skills: Jira ticket start-up, PR authoring, session handoff, technical documentation, BigStep branding",
   "owner": {
     "name": "Hetal Kumawat"
   },
   "plugins": [
     {
       "name": "hetal-skills",
-      "description": "Skills for shipping work: start a Jira ticket with a cited gap analysis, open a PR with an evidence-backed description, and hand off a session",
+      "description": "Skills for shipping work: start a Jira ticket with a cited gap analysis, open a PR with an evidence-backed description, hand off a session, and write a branded technical documentation deliverable from the codebase",
       "source": "."
     }
   ]

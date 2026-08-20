@@ -18,6 +18,8 @@ install. This repo holds the ones I use across projects and is installable by an
 | `open-pr` | Opens a GitHub PR with a short, evidence-backed description built from the repo's own PR template, the branch's commit bodies, and real test/lint runs. Labels failing checks pre-existing vs introduced. |
 | `start-ticket` | Paste a Jira ticket: pulls the base branch, cuts the ticket branch, then reports a cited, per-AC gap between the acceptance criteria and the code before changing anything. Confirms which parts of the repo are in scope and refuses to edit the rest. `--gap-only` for read-only analysis. |
 | `handoff` | Writes a handoff doc to `handoff/` in the project root so a fresh session — or a different account — can continue the work. Fires automatically at 90% session usage, and a `SessionStart` hook points the next session at it. See [`docs/handoff.md`](docs/handoff.md). |
+| `tech-doc` | Writes a technical documentation deliverable for a codebase: an evidence sweep that cites files and live cloud listings, the house section outline, graphviz diagrams, and a markdown → branded DOCX → PDF build. Never prints a secret value; every integration carries an honest status. |
+| `bigstep-branding` | The BigStep design system — palette, Poppins, logo variants, and ReportLab/Office primitives for covers, stat cards, callouts and branded tables. Applies to any deliverable: PDF, Word, PowerPoint, Excel, HTML. |
 
 ### handoff needs one extra step
 
@@ -46,6 +48,21 @@ Never modify apps/mobile unless the ticket or the request names it explicitly.
 
 Later runs read that and skip the question. Recording it there rather than in the skill's own
 config means the constraint also holds in plain sessions, and travels to the team through git.
+
+### tech-doc needs a toolchain
+
+Markdown is written without anything installed. The Word and PDF build needs:
+
+```bash
+brew install pandoc graphviz
+brew install --cask libreoffice   # PDF step only
+```
+
+The Word template it ships (`skills/tech-doc/assets/bigstep-reference.docx`) is styles, headers
+and footers only — 25KB, no body. It was produced by `scripts/make_reference_docx.py`, which
+exists because the branded .docx it was derived from still had a previous client's entire Scope
+of Work inside it, invisible in every export. Run any template you're handed through that script
+before committing it.
 
 ## Worked example
 
